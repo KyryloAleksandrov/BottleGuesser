@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameMaster : MonoBehaviour
@@ -10,18 +11,29 @@ public class GameMaster : MonoBehaviour
 
     private MovableBottle selectedBottle;
     private List<Color> keyColors;
+    private int counter;
+
     // Start is called before the first frame update
     void Start()
     {
         keyColors = new List<Color>();
         InitializeBottlesToGuess();
         InitializeBottlesToMove();
+
+        GetCorrectCounters();
+        Debug.Log(counter + " correct");
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        if(Input.GetMouseButtonUp(0))
+        {
+            if(TrySelectBottle())
+            {
+                return;
+            }
+        }
     }
 
     public void InitializeBottlesToGuess()
@@ -82,10 +94,49 @@ public class GameMaster : MonoBehaviour
 
             if(raycastHit.transform.TryGetComponent<MovableBottle>(out MovableBottle movableBottle))
             {
+                if(movableBottle == selectedBottle)
+                {
+                    selectedBottle.HideSelected();
+                    selectedBottle = null;
+                    return true;
+                }
+
+                if(selectedBottle != null)
+                {
+                    SwapColors(selectedBottle, movableBottle);
+                    GetCorrectCounters();
+                    Debug.Log(counter + " correct");
+                    selectedBottle = null;
+                    return true;
+                }
+
                 selectedBottle = movableBottle;
+                selectedBottle.ShowSelected();
                 return true;
             }
         }
         return false;
+    }
+
+    public void SwapColors(MovableBottle A, MovableBottle B)
+    {
+        Color temp = A.GetColor();
+        A.SetColor(B.GetColor());
+        B.SetColor(temp);
+
+        A.HideSelected();
+        B.HideSelected();
+    }
+
+    public void GetCorrectCounters()
+    {
+        counter = 0;
+        foreach(var bottle in bottlesToGuess)
+        {
+            if(bottle.CheckColor())
+            {
+                counter++;
+            }
+        }
     }
 }
